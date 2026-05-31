@@ -1,113 +1,122 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Typography } from "antd";
+import { useState, useEffect, useRef } from "react";
+import { Typography, Spin } from "antd";
 import { motion } from "framer-motion";
-import {
-	INITIAL_TEAMS,
-	TEAM_COLORS,
-	SCORE_POINTS,
-	type Team,
-	type Burst,
-} from "@/utils/constants";
+const { Title, Text } = Typography;
+import { getTeamColor, type Team, type Burst } from "@/utils/constants";
+import { createClient } from "@/utils/supabase/client";
+import { TYPING_CHANNEL, getRandomTypingText } from "@/utils/realtime-typing";
 import Confetti from "@/components/Confetti";
-import ScoreAnnouncement, {
-	ScoreFlash,
-} from "@/components/ScoreAnnouncement";
+import ScoreAnnouncement, { ScoreFlash } from "@/components/ScoreAnnouncement";
 import ScoreboardHeader from "@/components/ScoreboardHeader";
 import LeaderboardRow from "@/components/LeaderboardRow";
 
-const { Title, Text } = Typography;
-
 export default function Home() {
-	const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
+	const [teams, setTeams] = useState<Team[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [scoringTeamId, setScoringTeamId] = useState<string | null>(null);
 	const [lastPoints, setLastPoints] = useState(0);
 	const [lastEvent, setLastEvent] = useState<{
 		name: string;
 		points: number;
 	} | null>(null);
-	const [mounted, setMounted] = useState(false);
 	const [prevOrder, setPrevOrder] = useState<string[]>([]);
 	const [burst, setBurst] = useState<Burst | null>(null);
+	const [typingText, setTypingText] = useState<string | null>(null);
+	const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const burstIdRef = useRef(0);
 
 	useEffect(() => {
-		setMounted(true);
-		const saved = localStorage.getItem("ctf-scores");
-		if (saved) {
-			try {
-				setTeams(JSON.parse(saved));
-			} catch {
-				/* ignore */
+		const supabase = createClient();
+
+		const loadTeams = async () => {
+			const { data } = await supabase
+				.from("teams")
+				.select("*")
+				.order("score", { ascending: false });
+			if (data) {
+				setTeams(data as Team[]);
 			}
-		}
+			setLoading(false);
+		};
+
+		loadTeams();
+
+		const channel = supabase
+			.channel("teams-live")
+			.on(
+				"postgres_changes",
+				{ event: "UPDATE", schema: "public", table: "teams" },
+				(payload) => {
+					const updated = payload.new as Team;
+					setTeams((prev) => {
+						const existing = prev.find((t) => t.id === updated.id);
+						if (!existing) return prev;
+
+						const pointsGained = updated.score - existing.score;
+						if (pointsGained <= 0) {
+							return prev.map((t) => (t.id === updated.id ? updated : t));
+						}
+
+						const color = getTeamColor(updated.id);
+						burstIdRef.current += 1;
+						setScoringTeamId(updated.id);
+						setLastPoints(pointsGained);
+						setLastEvent({ name: updated.name, points: pointsGained });
+						setBurst({
+							id: burstIdRef.current,
+							teamName: updated.name,
+							teamColor: color,
+							points: pointsGained,
+						});
+
+						setTimeout(() => {
+							setScoringTeamId(null);
+							setLastEvent(null);
+							setBurst(null);
+						}, 2500);
+
+						return prev.map((t) => (t.id === updated.id ? updated : t));
+					});
+				},
+			)
+			.on(
+				"postgres_changes",
+				{ event: "INSERT", schema: "public", table: "teams" },
+				(payload) => {
+					const newTeam = payload.new as Team;
+					setTeams((prev) => [...prev, newTeam]);
+				},
+			)
+			.subscribe();
+
+		const typingChannel = supabase
+			.channel(TYPING_CHANNEL)
+			.on("broadcast", { event: "typing" }, () => {
+				setTypingText(getRandomTypingText());
+				if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+				typingTimeoutRef.current = setTimeout(() => {
+					setTypingText(null);
+				}, 3500);
+			})
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+			supabase.removeChannel(typingChannel);
+			if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+		};
 	}, []);
-
-	useEffect(() => {
-		if (mounted) {
-			localStorage.setItem("ctf-scores", JSON.stringify(teams));
-		}
-	}, [teams, mounted]);
-
-	const addScore = useCallback(() => {
-		setTeams((prev) => {
-			const idx = Math.floor(Math.random() * prev.length);
-			const points =
-				SCORE_POINTS[Math.floor(Math.random() * SCORE_POINTS.length)];
-			const next = prev.map((t) => ({ ...t }));
-			next[idx] = { ...next[idx], score: next[idx].score + points };
-
-			const teamId = next[idx].id;
-			const teamColor = TEAM_COLORS[teamId];
-
-			setScoringTeamId(teamId);
-			setLastPoints(points);
-			setLastEvent({ name: next[idx].name, points });
-
-			burstIdRef.current += 1;
-			setBurst({
-				id: burstIdRef.current,
-				teamName: next[idx].name,
-				teamColor,
-				points,
-			});
-
-			setTimeout(() => {
-				setScoringTeamId(null);
-				setLastEvent(null);
-				setBurst(null);
-			}, 2500);
-
-			return next;
-		});
-	}, []);
-
-	useEffect(() => {
-		if (!mounted) return;
-		const delay = 3000 + Math.random() * 5000;
-		const timer = setTimeout(addScore, delay);
-		return () => clearTimeout(timer);
-	}, [addScore, mounted]);
-
-	const reset = () => {
-		setTeams(INITIAL_TEAMS.map((t) => ({ ...t, score: 0 })));
-		setLastEvent(null);
-		setScoringTeamId(null);
-		setPrevOrder([]);
-		setBurst(null);
-		burstIdRef.current = 0;
-		localStorage.removeItem("ctf-scores");
-	};
 
 	const sorted = [...teams].sort((a, b) => b.score - a.score);
 	const sortedIds = sorted.map((t) => t.id);
 
 	useEffect(() => {
-		if (mounted) {
+		if (teams.length > 0) {
 			setPrevOrder(sortedIds);
 		}
-	}, [teams, mounted]);
+	}, [teams]);
 
 	const rankChanges = new Map<string, "up" | "down" | "same">();
 	if (prevOrder.length > 0) {
@@ -122,11 +131,64 @@ export default function Home() {
 
 	const topScore = sorted[0]?.score || 1;
 
+	const blueTeams = sorted.filter((t) => t.designation === "blue");
+	const redTeams = sorted.filter((t) => t.designation === "red");
+
+	if (loading) {
+		return (
+			<div
+				style={{
+					minHeight: "100vh",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+				}}
+			>
+				<Spin size="large" />
+			</div>
+		);
+	}
+
 	return (
 		<>
 			<Confetti burst={burst} />
 			<ScoreFlash burst={burst} />
 			<ScoreAnnouncement burst={burst} />
+
+			{typingText && (
+				<motion.div
+					initial={{ opacity: 0, y: -12 }}
+					animate={{ opacity: 1, y: 0 }}
+					style={{
+						position: "fixed",
+						bottom: 24,
+						right: 24,
+						zIndex: 999,
+						background: "rgba(248,55,45,0.12)",
+						border: "1px solid rgba(248,55,45,0.3)",
+						borderRadius: 12,
+						padding: "10px 18px",
+						fontFamily: "monospace",
+						fontSize: 13,
+						color: "rgba(240,237,230,0.8)",
+						backdropFilter: "blur(8px)",
+						maxWidth: 300,
+						pointerEvents: "none",
+					}}
+				>
+					<span style={{ color: "#F8372D" }}>&gt;</span> {typingText}
+				</motion.div>
+			)}
+
+			<motion.div
+				initial={{ opacity: 0, y: -20 }}
+				animate={{ opacity: 1, y: 0 }}
+				style={{
+					textAlign: "center",
+					paddingTop: 40,
+					paddingBottom: 8,
+				}}
+			></motion.div>
 
 			<div
 				style={{
@@ -140,12 +202,23 @@ export default function Home() {
 				}}
 			>
 				<div style={{ width: "100%", maxWidth: 560 }}>
-					<ScoreboardHeader
-						category="Blue"
-						lastEvent={lastEvent}
-					/>
+					<ScoreboardHeader category="Blue" lastEvent={lastEvent} />
 
-					{sorted.map((team, index) => (
+					{blueTeams.length === 0 && (
+						<Text
+							type="secondary"
+							style={{
+								display: "block",
+								textAlign: "center",
+								padding: 32,
+								fontFamily: "monospace",
+							}}
+						>
+							No blue teams yet
+						</Text>
+					)}
+
+					{blueTeams.map((team, index) => (
 						<LeaderboardRow
 							key={team.id}
 							team={team}
@@ -154,7 +227,7 @@ export default function Home() {
 							lastPoints={lastPoints}
 							rankChange={rankChanges.get(team.id)}
 							topScore={topScore}
-							teamColor={TEAM_COLORS[team.id]}
+							teamColor={getTeamColor(team.id)}
 						/>
 					))}
 
@@ -177,11 +250,9 @@ export default function Home() {
 							}}
 						>
 							Total flags captured:{" "}
-							{teams
-								.reduce((s, t) => s + t.score, 0)
-								.toLocaleString()}{" "}
-							pts | Leading:{" "}
-							<span style={{ color: TEAM_COLORS[sorted[0]?.id] }}>
+							{teams.reduce((s, t) => s + t.score, 0).toLocaleString()} pts |
+							Leading:{" "}
+							<span style={{ color: getTeamColor(sorted[0]?.id || "") }}>
 								{sorted[0]?.name}
 							</span>
 						</Text>
@@ -189,9 +260,23 @@ export default function Home() {
 				</div>
 
 				<div style={{ width: "100%", maxWidth: 560 }}>
-					<ScoreboardHeader category="Red" lastEvent={lastEvent} onReset={reset} />
+					<ScoreboardHeader category="Red" lastEvent={lastEvent} />
 
-					{sorted.map((team, index) => (
+					{redTeams.length === 0 && (
+						<Text
+							type="secondary"
+							style={{
+								display: "block",
+								textAlign: "center",
+								padding: 32,
+								fontFamily: "monospace",
+							}}
+						>
+							No red teams yet
+						</Text>
+					)}
+
+					{redTeams.map((team, index) => (
 						<LeaderboardRow
 							key={team.id}
 							team={team}
@@ -200,7 +285,7 @@ export default function Home() {
 							lastPoints={lastPoints}
 							rankChange={rankChanges.get(team.id)}
 							topScore={topScore}
-							teamColor={TEAM_COLORS[team.id]}
+							teamColor={getTeamColor(team.id)}
 						/>
 					))}
 
@@ -223,11 +308,9 @@ export default function Home() {
 							}}
 						>
 							Total flags captured:{" "}
-							{teams
-								.reduce((s, t) => s + t.score, 0)
-								.toLocaleString()}{" "}
-							pts | Leading:{" "}
-							<span style={{ color: TEAM_COLORS[sorted[0]?.id] }}>
+							{teams.reduce((s, t) => s + t.score, 0).toLocaleString()} pts |
+							Leading:{" "}
+							<span style={{ color: getTeamColor(sorted[0]?.id || "") }}>
 								{sorted[0]?.name}
 							</span>
 						</Text>
