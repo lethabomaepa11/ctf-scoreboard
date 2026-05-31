@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Typography } from "antd";
-import { Trophy, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Crown } from "lucide-react";
 import type { Team } from "@/utils/constants";
 
 const { Text } = Typography;
@@ -23,7 +23,7 @@ export default function LeaderboardRow({
 	rankChange: "up" | "down" | "same" | undefined;
 	topScore: number;
 	teamColor: string;
-}) {
+	}) {
 	const barPercent = (team.score / topScore) * 100;
 
 	return (
@@ -39,9 +39,7 @@ export default function LeaderboardRow({
 			<motion.div
 				animate={{
 					width: `${barPercent}%`,
-					backgroundColor: isScoring
-						? `${teamColor}44`
-						: "rgba(255,255,255,0.04)",
+					backgroundColor: `${teamColor}18`,
 				}}
 				transition={{ duration: 0.6, ease: "easeOut" }}
 				style={{
@@ -75,46 +73,15 @@ export default function LeaderboardRow({
 					padding: "14px 20px",
 					borderRadius: 10,
 					border: "1px solid",
-					borderColor: isScoring
-						? `${teamColor}88`
-						: "rgba(255, 255, 255, 0.06)",
+				borderColor: isScoring
+					? `${teamColor}88`
+					: "rgba(255, 255, 255, 0.06)",
 					backgroundColor: isScoring
 						? `${teamColor}18`
 						: "rgba(255, 255, 255, 0.03)",
 					transition: "background-color 0.3s, border-color 0.3s",
 				}}
 			>
-				<div style={{ width: 44, textAlign: "center", flexShrink: 0 }}>
-					{index === 0 && (
-						<motion.div
-							animate={{
-								rotate: [0, -10, 10, -10, 0],
-								scale: [1, 1.15, 1],
-							}}
-							transition={{
-								duration: 0.6,
-								repeat: Number.POSITIVE_INFINITY,
-								repeatDelay: 4,
-							}}
-						>
-							<Trophy size={18} color="#ffd700" />
-						</motion.div>
-					)}
-					{index === 1 && <Trophy size={18} color="#c0c0c0" />}
-					{index === 2 && <Trophy size={18} color="#cd7f32" />}
-					{index > 2 && (
-						<Text
-							style={{
-								color: "rgba(255,255,255,0.25)",
-								fontFamily: "monospace",
-								fontSize: 13,
-							}}
-						>
-							#{index + 1}
-						</Text>
-					)}
-				</div>
-
 				<div
 					style={{
 						flex: 1,
@@ -123,6 +90,9 @@ export default function LeaderboardRow({
 						gap: 12,
 					}}
 				>
+					{index === 0 && (
+						<Crown size={16} color="#ffd700" style={{ flexShrink: 0 }} />
+					)}
 					<motion.div
 						animate={{
 							boxShadow: isScoring
@@ -138,27 +108,29 @@ export default function LeaderboardRow({
 							flexShrink: 0,
 						}}
 					/>
-					<motion.span
-						animate={{
-							color: isScoring
-								? teamColor
-								: "rgba(255,255,255,0.9)",
-						}}
-						transition={{ duration: 0.3 }}
-						style={{ fontFamily: "monospace", fontSize: 15 }}
-					>
-						{team.name}
-					</motion.span>
-					{rankChange === "up" && (
-						<motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-							<TrendingUp size={14} color="#52c41a" />
-						</motion.div>
-					)}
-					{rankChange === "down" && (
-						<motion.div initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-							<TrendingDown size={14} color="#ff4d4f" />
-						</motion.div>
-					)}
+					<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+						<motion.span
+							animate={{
+								color: isScoring
+									? teamColor
+									: "rgba(255,255,255,0.9)",
+							}}
+							transition={{ duration: 0.3 }}
+							style={{ fontFamily: "monospace", fontSize: 15 }}
+						>
+							{team.name}
+						</motion.span>
+						{rankChange === "up" && (
+							<motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+								<TrendingUp size={14} color="#52c41a" />
+							</motion.div>
+						)}
+						{rankChange === "down" && (
+							<motion.div initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+								<TrendingDown size={14} color="#ff4d4f" />
+							</motion.div>
+						)}
+					</div>
 				</div>
 
 				<div style={{ position: "relative", textAlign: "right" }}>

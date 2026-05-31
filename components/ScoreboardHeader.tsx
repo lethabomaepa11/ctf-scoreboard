@@ -34,7 +34,7 @@ export default function ScoreboardHeader({
 						fontFamily: "monospace",
 						letterSpacing: 6,
 						fontSize: 28,
-						color: category === "Blue" ? "#2ABFAA" : "#F8372D"
+						color: category === "Blue" ? "#1890ff" : "#F8372D"
 					}}
 				>
 					<motion.span

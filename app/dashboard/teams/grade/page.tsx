@@ -51,27 +51,8 @@ export default function GradeTeamPage() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ id: selectedTeam, score: gradePoints }),
 			});
-
-			const { error } = await res.json();
-			console.log("Grade response:", { res, error });
-			if (error) {
-				if (
-					error.message.includes("function") &&
-					error.message.includes("not found")
-				) {
-					const team = teams.find((t) => t.id === selectedTeam);
-					if (team) {
-						const { error: updateError } = await supabase.current
-							.from("teams")
-							.update({ score: team.score + gradePoints })
-							.eq("id", selectedTeam);
-						if (updateError) throw updateError;
-					}
-				} else {
-					throw error;
-				}
-			}
-
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error);
 			const teamName = teams.find((t) => t.id === selectedTeam)?.name;
 			message.success(`${teamName} scored +${gradePoints}`);
 			setGradePoints(100);
@@ -85,26 +66,24 @@ export default function GradeTeamPage() {
 		}
 	};
 
-	const typingChannelRef = useRef<ReturnType<
-		typeof supabase.current.channel
-	> | null>(null);
+	const bcRef = useRef<ReturnType<typeof supabase.current.channel> | null>(
+		null,
+	);
 
 	useEffect(() => {
 		const channel = supabase.current.channel(TYPING_CHANNEL);
 		channel.subscribe();
-		typingChannelRef.current = channel;
+		bcRef.current = channel;
 		return () => {
-			channel.unsubscribe();
+			supabase.current.removeChannel(channel);
 		};
 	}, []);
 
 	useEffect(() => {
-		const channel = typingChannelRef.current;
-		if (!channel) return;
-		if (searchValue) {
-			channel.send({ type: "broadcast", event: "typing", payload: {} });
-		}
-	}, [searchValue]);
+		const channel = bcRef.current;
+		if (!channel || !selectedTeam) return;
+		channel.send({ type: "broadcast", event: "typing", payload: {} });
+	}, [selectedTeam]);
 
 	const filteredTeams = teams.filter((t) =>
 		t.name.toLowerCase().includes(searchValue.toLowerCase()),

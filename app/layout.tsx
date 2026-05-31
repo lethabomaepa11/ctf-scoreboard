@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "CTF Scoreboard",
 	description: "Live CTF competition scoreboard",
+	icons: [{ rel: "icon", url: "/logo.png" }],
 };
 
 export default function RootLayout({

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Typography, Spin } from "antd";
 import { motion } from "framer-motion";
-const { Title, Text } = Typography;
+const { Text } = Typography;
 import { getTeamColor, type Team, type Burst } from "@/utils/constants";
 import { createClient } from "@/utils/supabase/client";
 import { TYPING_CHANNEL, getRandomTypingText } from "@/utils/realtime-typing";
@@ -11,6 +11,7 @@ import Confetti from "@/components/Confetti";
 import ScoreAnnouncement, { ScoreFlash } from "@/components/ScoreAnnouncement";
 import ScoreboardHeader from "@/components/ScoreboardHeader";
 import LeaderboardRow from "@/components/LeaderboardRow";
+import TerminalOutput from "@/components/animations/TerminalOutput";
 
 export default function Home() {
 	const [teams, setTeams] = useState<Team[]>([]);
@@ -31,12 +32,10 @@ export default function Home() {
 		const supabase = createClient();
 
 		const loadTeams = async () => {
-			const { data } = await supabase
-				.from("teams")
-				.select("*")
-				.order("score", { ascending: false });
-			if (data) {
-				setTeams(data as Team[]);
+			const req = await fetch("/api/teams");
+			const { teams } = await req.json();
+			if (teams) {
+				setTeams(teams as Team[]);
 			}
 			setLoading(false);
 		};
@@ -59,7 +58,6 @@ export default function Home() {
 							return prev.map((t) => (t.id === updated.id ? updated : t));
 						}
 
-						const color = getTeamColor(updated.id);
 						burstIdRef.current += 1;
 						setScoringTeamId(updated.id);
 						setLastPoints(pointsGained);
@@ -67,7 +65,7 @@ export default function Home() {
 						setBurst({
 							id: burstIdRef.current,
 							teamName: updated.name,
-							teamColor: color,
+							teamColor: updated.designation === "blue" ? "#1890ff" : "#F8372D",
 							points: pointsGained,
 						});
 
@@ -154,41 +152,7 @@ export default function Home() {
 			<Confetti burst={burst} />
 			<ScoreFlash burst={burst} />
 			<ScoreAnnouncement burst={burst} />
-
-			{typingText && (
-				<motion.div
-					initial={{ opacity: 0, y: -12 }}
-					animate={{ opacity: 1, y: 0 }}
-					style={{
-						position: "fixed",
-						bottom: 24,
-						right: 24,
-						zIndex: 999,
-						background: "rgba(248,55,45,0.12)",
-						border: "1px solid rgba(248,55,45,0.3)",
-						borderRadius: 12,
-						padding: "10px 18px",
-						fontFamily: "monospace",
-						fontSize: 13,
-						color: "rgba(240,237,230,0.8)",
-						backdropFilter: "blur(8px)",
-						maxWidth: 300,
-						pointerEvents: "none",
-					}}
-				>
-					<span style={{ color: "#F8372D" }}>&gt;</span> {typingText}
-				</motion.div>
-			)}
-
-			<motion.div
-				initial={{ opacity: 0, y: -20 }}
-				animate={{ opacity: 1, y: 0 }}
-				style={{
-					textAlign: "center",
-					paddingTop: 40,
-					paddingBottom: 8,
-				}}
-			></motion.div>
+			<TerminalOutput visible={true} />
 
 			<div
 				style={{
@@ -201,7 +165,20 @@ export default function Home() {
 					position: "relative",
 				}}
 			>
-				<div style={{ width: "100%", maxWidth: 560 }}>
+				{/* BLUE TEAM */}
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					style={{
+						width: "100%",
+						maxWidth: 560,
+						border: "1px solid #1890ff22",
+						borderRadius: 12,
+						background: "linear-gradient(180deg, #0D0E14 0%, #0A0B0F 100%)",
+						boxShadow: "0 0 30px #1890ff08, inset 0 0 30px #1890ff04",
+						padding: "20px 20px 16px",
+					}}
+				>
 					<ScoreboardHeader category="Blue" lastEvent={lastEvent} />
 
 					{blueTeams.length === 0 && (
@@ -227,7 +204,7 @@ export default function Home() {
 							lastPoints={lastPoints}
 							rankChange={rankChanges.get(team.id)}
 							topScore={topScore}
-							teamColor={getTeamColor(team.id)}
+							teamColor="#1890ff"
 						/>
 					))}
 
@@ -249,17 +226,30 @@ export default function Home() {
 								fontSize: 12,
 							}}
 						>
-							Total flags captured:{" "}
-							{teams.reduce((s, t) => s + t.score, 0).toLocaleString()} pts |
-							Leading:{" "}
-							<span style={{ color: getTeamColor(sorted[0]?.id || "") }}>
-								{sorted[0]?.name}
+							Total: {blueTeams.reduce((s, t) => s + t.score, 0).toLocaleString()}{" "}
+							pts | Leader:{" "}
+							<span style={{ color: "#1890ff" }}>
+								{blueTeams[0]?.name}
 							</span>
 						</Text>
 					</motion.div>
-				</div>
+				</motion.div>
 
-				<div style={{ width: "100%", maxWidth: 560 }}>
+				{/* RED TEAM */}
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.15 }}
+					style={{
+						width: "100%",
+						maxWidth: 560,
+						border: "1px solid #F8372D22",
+						borderRadius: 12,
+						background: "linear-gradient(180deg, #0D0E14 0%, #0A0B0F 100%)",
+						boxShadow: "0 0 30px #F8372D08, inset 0 0 30px #F8372D04",
+						padding: "20px 20px 16px",
+					}}
+				>
 					<ScoreboardHeader category="Red" lastEvent={lastEvent} />
 
 					{redTeams.length === 0 && (
@@ -285,7 +275,7 @@ export default function Home() {
 							lastPoints={lastPoints}
 							rankChange={rankChanges.get(team.id)}
 							topScore={topScore}
-							teamColor={getTeamColor(team.id)}
+							teamColor="#F8372D"
 						/>
 					))}
 
@@ -307,15 +297,14 @@ export default function Home() {
 								fontSize: 12,
 							}}
 						>
-							Total flags captured:{" "}
-							{teams.reduce((s, t) => s + t.score, 0).toLocaleString()} pts |
-							Leading:{" "}
-							<span style={{ color: getTeamColor(sorted[0]?.id || "") }}>
-								{sorted[0]?.name}
+							Total: {redTeams.reduce((s, t) => s + t.score, 0).toLocaleString()}{" "}
+							pts | Leader:{" "}
+							<span style={{ color: "#F8372D" }}>
+								{redTeams[0]?.name}
 							</span>
 						</Text>
 					</motion.div>
-				</div>
+				</motion.div>
 			</div>
 		</>
 	);
