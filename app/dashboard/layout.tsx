@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Layout, Typography, Button, Space, Spin } from "antd";
-import { LogoutOutlined } from "@ant-design/icons";
+import { Layout, Spin } from "antd";
 import { createClient } from "@/utils/supabase/client";
 
-const { Header, Content } = Layout;
-const { Text } = Typography;
+const { Content } = Layout;
 
 export default function DashboardLayout({
 	children,
@@ -21,18 +19,12 @@ export default function DashboardLayout({
 		const supabase = createClient();
 		supabase.auth.getUser().then(({ data: { user } }) => {
 			if (!user) {
-				router.replace("/dashboard/login");
+				router.replace("/login");
 			} else {
 				setChecking(false);
 			}
 		});
 	}, [router]);
-
-	const handleLogout = async () => {
-		const supabase = createClient();
-		await supabase.auth.signOut();
-		router.push("/dashboard/login");
-	};
 
 	if (checking) {
 		return (
@@ -42,6 +34,7 @@ export default function DashboardLayout({
 					display: "flex",
 					alignItems: "center",
 					justifyContent: "center",
+					paddingTop: 60,
 				}}
 			>
 				<Spin size="large" />
@@ -51,27 +44,7 @@ export default function DashboardLayout({
 
 	return (
 		<Layout style={{ minHeight: "100vh" }}>
-			<Header
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					padding: "0 24px",
-				}}
-			>
-				<Text strong style={{ fontSize: 16, color: "#F0EDE6" }}>
-					CTF Scoreboard Admin
-				</Text>
-				<Button
-					type="text"
-					icon={<LogoutOutlined />}
-					onClick={handleLogout}
-					style={{ color: "rgba(240,237,230,0.65)" }}
-				>
-					Logout
-				</Button>
-			</Header>
-			<Content style={{ padding: 24 }}>{children}</Content>
+			<Content style={{ padding: "80px 24px 24px" }}>{children}</Content>
 		</Layout>
 	);
 }

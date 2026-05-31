@@ -134,6 +134,18 @@ export const getAntdTheme = (mode: ThemeMode): ThemeConfig => {
         activeBorderColor: palette.red,
         hoverBorderColor: palette.red,
       },
+      Table: {
+        headerBg: "rgba(255,255,255,0.03)",
+        headerColor: "rgba(240,237,230,0.65)",
+        rowHoverBg: "rgba(255,255,255,0.05)",
+        borderColor: palette.border,
+        colorBgContainer: "transparent",
+      },
+      Modal: {
+        contentBg: "#1A1A1D",
+        headerBg: "#1A1A1D",
+        titleColor: palette.paper,
+      },
     },
   };
 };
