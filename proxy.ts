@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
 	} = await supabase.auth.getUser();
 
 	const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
-	const isLogin = request.nextUrl.pathname === "/dashboard/login";
+	const isLogin = request.nextUrl.pathname === "/login";
 	const isStatic =
 		request.nextUrl.pathname.startsWith("/_next") ||
 		request.nextUrl.pathname.startsWith("/favicon");
@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
 
 	if (isDashboard && !isLogin && !user) {
 		const url = request.nextUrl.clone();
-		url.pathname = "/dashboard/login";
+		url.pathname = "/";
 		url.searchParams.set("from", request.nextUrl.pathname);
 		return NextResponse.redirect(url);
 	}
@@ -33,5 +33,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/dashboard/:path*"],
+	matcher: ["/dashboard/:path*", "/api/:path*"],
 };
