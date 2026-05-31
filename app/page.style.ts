@@ -9,6 +9,7 @@ export const useStyles = createStyles(({ css, responsive }) => ({
 		gap: 10rem;
 		padding: 80px 1rem 2rem;
 		position: relative;
+		z-index: 1;
 
 		${responsive.mobile} {
 			flex-direction: column;
@@ -21,5 +22,7 @@ export const useStyles = createStyles(({ css, responsive }) => ({
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		position: relative;
+		z-index: 1;
 	`,
 }));

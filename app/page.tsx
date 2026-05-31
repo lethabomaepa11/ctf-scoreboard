@@ -5,6 +5,7 @@ import Confetti from "@/components/Confetti";
 import ScoreAnnouncement, { ScoreFlash } from "@/components/ScoreAnnouncement";
 import TeamColumn from "@/components/TeamColumn";
 import TerminalOutput from "@/components/animations/TerminalOutput";
+import BgParticles from "@/components/BgParticles";
 import { useScoreboard } from "@/hooks/useScoreboard";
 import { useStyles } from "./page.style";
 
@@ -36,6 +37,7 @@ export default function Home() {
 			<ScoreFlash burst={burst} />
 			<ScoreAnnouncement burst={burst} />
 			<TerminalOutput />
+			<BgParticles blueScore={blueTeams.reduce((s, t) => s + t.score, 0)} redScore={redTeams.reduce((s, t) => s + t.score, 0)} />
 
 			<div className={styles.container}>
 				<TeamColumn
