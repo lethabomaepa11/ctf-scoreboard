@@ -6,8 +6,10 @@ import ScoreAnnouncement, { ScoreFlash } from "@/components/ScoreAnnouncement";
 import TeamColumn from "@/components/TeamColumn";
 import TerminalOutput from "@/components/animations/TerminalOutput";
 import { useScoreboard } from "@/hooks/useScoreboard";
+import { useStyles } from "./page.style";
 
 export default function Home() {
+	const { styles } = useStyles();
 	const {
 		loading,
 		scoringTeamId,
@@ -22,14 +24,7 @@ export default function Home() {
 
 	if (loading) {
 		return (
-			<div
-				style={{
-					minHeight: "100vh",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-				}}
-			>
+			<div className={styles.loading}>
 				<Spin size="large" />
 			</div>
 		);
@@ -40,19 +35,9 @@ export default function Home() {
 			<Confetti burst={burst} />
 			<ScoreFlash burst={burst} />
 			<ScoreAnnouncement burst={burst} />
-			<TerminalOutput visible={true} />
+			<TerminalOutput />
 
-			<div
-				style={{
-					minHeight: "100vh",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					gap: "10rem",
-					padding: "80px 1rem 2rem",
-					position: "relative",
-				}}
-			>
+			<div className={styles.container}>
 				<TeamColumn
 					category="Blue"
 					teams={blueTeams}

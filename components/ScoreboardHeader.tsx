@@ -3,6 +3,7 @@
 import { Typography, Button, Tag } from "antd";
 import { motion } from "framer-motion";
 import { RotateCcw, Zap } from "lucide-react";
+import { useStyles } from "./ScoreboardHeader.style";
 
 const { Title, Text } = Typography;
 
@@ -20,21 +21,23 @@ export default function ScoreboardHeader({
 	lastEvent: Event | null;
 	onReset?: () => void;
 }) {
+	const color = category === "Blue" ? "#1890ff" : "#F8372D";
+	const { styles } = useStyles();
+
 	return (
 		<>
 			<motion.div
 				initial={{ opacity: 0, y: -20 }}
 				animate={{ opacity: 1, y: 0 }}
-				style={{ textAlign: "center", marginBottom: 24 }}
+				className={styles.header}
 			>
 				<Title
 					level={1}
 					style={{
 						margin: 0,
-						fontFamily: "monospace",
 						letterSpacing: 6,
 						fontSize: 28,
-						color: category === "Blue" ? "#1890ff" : "#F8372D"
+						color,
 					}}
 				>
 					<motion.span
@@ -44,6 +47,7 @@ export default function ScoreboardHeader({
 							repeat: Number.POSITIVE_INFINITY,
 							ease: "easeInOut",
 						}}
+						className={styles.blink}
 					>
 						{">_"}
 					</motion.span>{" "}
@@ -52,34 +56,20 @@ export default function ScoreboardHeader({
 				<Text
 					type="secondary"
 					style={{
-						fontFamily: "monospace",
 						fontSize: 16,
 						marginTop: 4,
 						display: "block",
+						color,
 					}}
 				>
 					{category === "Blue" ? "THE DEFENDERS" : "THE PREDATORS"}
 				</Text>
 			</motion.div>
 
-			<div
-				style={{
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
-					marginBottom: 24,
-					minHeight: 32,
-				}}
-			>
+			<div className={styles.eventRow}>
 				<motion.div
 					layout
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: 8,
-						flex: 1,
-						minHeight: 32,
-					}}
+					className={styles.eventInner}
 				>
 					{lastEvent && (
 						<motion.div

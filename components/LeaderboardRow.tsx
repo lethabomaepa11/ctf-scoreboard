@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Typography } from "antd";
 import { TrendingUp, TrendingDown, Crown } from "lucide-react";
 import type { Team } from "@/utils/constants";
+import { useStyles } from "./LeaderboardRow.style";
 
 const { Text } = Typography;
 
@@ -24,6 +25,7 @@ export default function LeaderboardRow({
 	topScore: number;
 	teamColor: string;
 	}) {
+	const { styles } = useStyles();
 	const barPercent = (team.score / topScore) * 100;
 
 	return (
@@ -34,7 +36,7 @@ export default function LeaderboardRow({
 			transition={{
 				layout: { type: "spring", stiffness: 180, damping: 24 },
 			}}
-			style={{ marginBottom: 8, position: "relative" }}
+			className={styles.row}
 		>
 			<motion.div
 				animate={{
@@ -73,23 +75,16 @@ export default function LeaderboardRow({
 					padding: "14px 20px",
 					borderRadius: 10,
 					border: "1px solid",
-				borderColor: isScoring
-					? `${teamColor}88`
-					: "rgba(255, 255, 255, 0.06)",
+					borderColor: isScoring
+						? `${teamColor}88`
+						: "rgba(255, 255, 255, 0.06)",
 					backgroundColor: isScoring
 						? `${teamColor}18`
 						: "rgba(255, 255, 255, 0.03)",
 					transition: "background-color 0.3s, border-color 0.3s",
 				}}
 			>
-				<div
-					style={{
-						flex: 1,
-						display: "flex",
-						alignItems: "center",
-						gap: 12,
-					}}
-				>
+				<div className={styles.leftSection}>
 					{index === 0 && (
 						<Crown size={16} color="#ffd700" style={{ flexShrink: 0 }} />
 					)}
@@ -116,7 +111,7 @@ export default function LeaderboardRow({
 									: "rgba(255,255,255,0.9)",
 							}}
 							transition={{ duration: 0.3 }}
-							style={{ fontFamily: "monospace", fontSize: 15 }}
+							className={styles.name}
 						>
 							{team.name}
 						</motion.span>
@@ -147,22 +142,11 @@ export default function LeaderboardRow({
 							stiffness: 350,
 							damping: 10,
 						}}
-						style={{
-							fontFamily: "monospace",
-							fontSize: 18,
-							fontWeight: 700,
-						}}
+						className={styles.score}
 					>
 						{team.score.toLocaleString()}
 					</motion.span>
-					<Text
-						style={{
-							color: "rgba(255,255,255,0.3)",
-							fontFamily: "monospace",
-							fontSize: 12,
-							marginLeft: 4,
-						}}
-					>
+					<Text className={styles.scoreLabel}>
 						pts
 					</Text>
 
@@ -171,17 +155,7 @@ export default function LeaderboardRow({
 							initial={{ opacity: 1, y: 0, x: 0 }}
 							animate={{ opacity: 0, y: -32, x: 8 }}
 							transition={{ duration: 1.8, ease: "easeOut" }}
-							style={{
-								position: "absolute",
-								top: -24,
-								right: 0,
-								color: "#52c41a",
-								fontFamily: "monospace",
-								fontWeight: 700,
-								fontSize: 20,
-								pointerEvents: "none",
-								textShadow: "0 0 12px rgba(82,196,26,0.6)",
-							}}
+							className={styles.pointsPopup}
 						>
 							+{lastPoints}
 						</motion.div>

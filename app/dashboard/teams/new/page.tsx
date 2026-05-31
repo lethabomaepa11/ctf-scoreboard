@@ -5,10 +5,12 @@ import { Card, Form, Input, Button, Select, Typography, App, Space } from "antd"
 import { TeamOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useStyles } from "./page.style";
 
 const { Title } = Typography;
 
 export default function AddTeamPage() {
+	const { styles } = useStyles();
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 	const { message } = App.useApp();
@@ -37,12 +39,12 @@ export default function AddTeamPage() {
 	};
 
 	return (
-		<div style={{ maxWidth: 480, margin: "0 auto" }}>
+		<div className={styles.wrapper}>
 			<Button
 				type="text"
 				icon={<ArrowLeftOutlined />}
 				onClick={() => router.push("/dashboard")}
-				style={{ marginBottom: 16 }}
+				className={styles.backBtn}
 			>
 				Back
 			</Button>

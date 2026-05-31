@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ScoreboardHeader from "@/components/ScoreboardHeader";
 import LeaderboardRow from "@/components/LeaderboardRow";
 import type { Team } from "@/utils/constants";
+import { useStyles } from "./TeamColumn.style";
 
 const { Text } = Typography;
 
@@ -29,33 +30,19 @@ export default function TeamColumn({
 	rankChanges,
 	topScore,
 }: Props) {
+	const { styles } = useStyles({ accentColor });
+
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ delay: category === "Red" ? 0.15 : 0 }}
-			style={{
-				width: "100%",
-				maxWidth: 560,
-				border: `1px solid ${accentColor}22`,
-				borderRadius: 12,
-				background: "linear-gradient(180deg, #0D0E14 0%, #0A0B0F 100%)",
-				boxShadow: `0 0 30px ${accentColor}08, inset 0 0 30px ${accentColor}04`,
-				padding: "20px 20px 16px",
-			}}
+			className={styles.column}
 		>
 			<ScoreboardHeader category={category} lastEvent={lastEvent} />
 
 			{teams.length === 0 && (
-				<Text
-					type="secondary"
-					style={{
-						display: "block",
-						textAlign: "center",
-						padding: 32,
-						fontFamily: "monospace",
-					}}
-				>
+				<Text className={styles.emptyText}>
 					No {category.toLowerCase()} teams yet
 				</Text>
 			)}
@@ -77,22 +64,11 @@ export default function TeamColumn({
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ delay: 0.5 }}
-				style={{
-					textAlign: "center",
-					marginTop: 32,
-					padding: "16px 0",
-					borderTop: "1px solid rgba(255,255,255,0.06)",
-				}}
+				className={styles.footer}
 			>
-				<Text
-					style={{
-						color: "rgba(255,255,255,0.3)",
-						fontFamily: "monospace",
-						fontSize: 12,
-					}}
-				>
+				<Text className={styles.footerText}>
 					Total: {teams.reduce((s, t) => s + t.score, 0).toLocaleString()} pts | Leader:{" "}
-					<span style={{ color: accentColor }}>{teams[0]?.name}</span>
+					<span className={styles.leaderName}>{teams[0]?.name}</span>
 				</Text>
 			</motion.div>
 		</motion.div>

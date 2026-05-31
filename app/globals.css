@@ -8,12 +8,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-saira-condensed), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+}
+
+* {
+  font-family: var(--font-saira-condensed), system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+code, pre, .mono {
+  font-family: var(--font-geist-mono), monospace;
 }

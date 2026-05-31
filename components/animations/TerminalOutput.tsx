@@ -4,21 +4,19 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { TYPING_CHANNEL, getRandomTypingText } from "@/utils/realtime-typing";
 
-const CLS_AFTER = 4;
 const TYPING_SPEED = 30;
+const HIDE_DELAY = 5000;
 
-export default function TerminalOutput({ visible = true }: { visible?: boolean }) {
-	const [lines, setLines] = useState<string[]>([
-		"root@ctf:~$ systemctl start scoreboard",
-	]);
+export default function TerminalOutput() {
+	const [visible, setVisible] = useState(false);
+	const [displayedLine, setDisplayedLine] = useState("");
 	const [typingLine, setTypingLine] = useState("");
-	const scrollRef = useRef<HTMLDivElement>(null);
-	const countRef = useRef(0);
-	const queueRef = useRef<{ text: string; onDone?: () => void }[]>([]);
+	const queueRef = useRef<{ text: string }[]>([]);
 	const busyRef = useRef(false);
+	const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const typeText = useCallback((text: string, onDone?: () => void) => {
-		queueRef.current.push({ text, onDone });
+	const typeText = useCallback((text: string) => {
+		queueRef.current.push({ text });
 		if (busyRef.current) return;
 		busyRef.current = true;
 
@@ -29,6 +27,7 @@ export default function TerminalOutput({ visible = true }: { visible?: boolean }
 				return;
 			}
 
+			setDisplayedLine("");
 			let i = 0;
 			setTypingLine(next.text);
 			const t = setInterval(() => {
@@ -36,9 +35,8 @@ export default function TerminalOutput({ visible = true }: { visible?: boolean }
 				setTypingLine(next.text.slice(0, i));
 				if (i >= next.text.length) {
 					clearInterval(t);
-					setLines((prev) => [...prev, next.text]);
+					setDisplayedLine(next.text);
 					setTypingLine("");
-					next.onDone?.();
 					setTimeout(processQueue, 200);
 				}
 			}, TYPING_SPEED);
@@ -48,32 +46,26 @@ export default function TerminalOutput({ visible = true }: { visible?: boolean }
 	}, []);
 
 	useEffect(() => {
-		if (!visible) return;
 		const supabase = createClient();
 		const channel = supabase
 			.channel(TYPING_CHANNEL)
-			.on("broadcast", { event: "typing" }, () => {
-				countRef.current += 1;
-				if (countRef.current >= CLS_AFTER) {
-					countRef.current = 0;
-					typeText("root@ctf:~$ cls", () => {
-						setTimeout(() => {
-							setLines([]);
-						}, 500);
-					});
-				} else {
-					typeText(`root@ctf:~$ ${getRandomTypingText()}`);
-				}
+			.on("broadcast", { event: "typing" }, (payload) => {
+				const { team, points } = payload.payload ?? {};
+				const text = team && points
+					? `root@ctf:~$ ${team} scored +${points} pts`
+					: `root@ctf:~$ ${getRandomTypingText()}`;
+
+				setVisible(true);
+				if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+				hideTimerRef.current = setTimeout(() => setVisible(false), HIDE_DELAY);
+				typeText(text);
 			})
 			.subscribe();
-		return () => { supabase.removeChannel(channel); };
-	}, [visible, typeText]);
-
-	useEffect(() => {
-		if (scrollRef.current) {
-			scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-		}
-	}, [lines, typingLine]);
+		return () => {
+			supabase.removeChannel(channel);
+			if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+		};
+	}, [typeText]);
 
 	if (!visible) return null;
 
@@ -85,7 +77,6 @@ export default function TerminalOutput({ visible = true }: { visible?: boolean }
 				left: 16,
 				zIndex: 2,
 				width: 380,
-				maxHeight: 220,
 				overflow: "hidden",
 				background: "rgba(10,11,15,0.88)",
 				border: "1px solid rgba(0,255,65,0.15)",
@@ -113,18 +104,12 @@ export default function TerminalOutput({ visible = true }: { visible?: boolean }
 					LISTENING
 				</span>
 			</div>
-			<div ref={scrollRef} style={{ overflowY: "auto", maxHeight: 170 }}>
-				{lines.map((line, i) => (
-					<div
-						key={i}
-						style={{
-							color: line.startsWith("root@ctf") ? "#00ff41" : "rgba(0,255,65,0.6)",
-							whiteSpace: "pre-wrap",
-						}}
-					>
-						{line}
+			<div>
+				{displayedLine && (
+					<div style={{ color: "#00ff41", whiteSpace: "pre-wrap" }}>
+						{displayedLine}
 					</div>
-				))}
+				)}
 				{typingLine && (
 					<div style={{ color: "#00ff41" }}>
 						{typingLine}

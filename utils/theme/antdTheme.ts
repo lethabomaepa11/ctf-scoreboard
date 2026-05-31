@@ -108,7 +108,7 @@ export const getAntdTheme = (mode: ThemeMode): ThemeConfig => {
       colorFillAlter: palette.cardBg,
 
       borderRadius: 12,
-      fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
+      fontFamily: "var(--font-saira-condensed), system-ui, sans-serif",
     },
     components: {
       Layout: {

@@ -108,7 +108,6 @@ export default function ScoreAnnouncement({
 									<Text
 										style={{
 											color: "#ff6b35",
-											fontFamily: "monospace",
 											fontWeight: 700,
 											fontSize: 14,
 											letterSpacing: 3,
@@ -124,7 +123,6 @@ export default function ScoreAnnouncement({
 									<Text
 										style={{
 											color: burst.teamColor,
-											fontFamily: "monospace",
 											fontWeight: 700,
 											fontSize: 13,
 											letterSpacing: 4,
@@ -149,7 +147,6 @@ export default function ScoreAnnouncement({
 							<Text
 								style={{
 									color: "#fff",
-									fontFamily: "monospace",
 									fontSize: 32,
 									fontWeight: 800,
 									letterSpacing: 2,
@@ -168,7 +165,6 @@ export default function ScoreAnnouncement({
 							<Text
 								style={{
 									color: burst.teamColor,
-									fontFamily: "monospace",
 									fontSize: 24,
 									fontWeight: 700,
 								}}

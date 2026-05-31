@@ -6,10 +6,12 @@ import { Card, Form, Input, Button, Typography, App } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useStyles } from "./page.style";
 
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
+	const { styles } = useStyles();
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 	const { message } = App.useApp();
@@ -32,32 +34,30 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div
-			style={{
-				minHeight: "100vh",
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "center",
-				padding: 24,
-			}}
-		>
+		<div className={styles.container}>
 			<Card
-				style={{ width: "100%", maxWidth: 400 }}
+				className={styles.card}
 				styles={{
 					body: { padding: 32 },
 				}}
 			>
+				<div style={{ textAlign: "center", marginBottom: 24 }}>
+					<Image
+						src="/logo.png"
+						alt="CTF Logo"
+						width={240}
+						height={43}
+						priority
+						style={{ borderRadius: 6 }}
+					/>
+				</div>
 				<Title
 					level={3}
-					style={{ textAlign: "center", marginBottom: 8 }}
+					className={styles.title}
 				></Title>
 				<Text
 					type="secondary"
-					style={{
-						display: "block",
-						textAlign: "center",
-						marginBottom: 32,
-					}}
+					className={styles.subtitle}
 				>
 					Sign in to manage the scoreboard
 				</Text>
